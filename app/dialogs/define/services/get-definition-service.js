@@ -1,27 +1,31 @@
-const { EntityRecognizer } = require('botbuilder');
-const wordDefApi = require('./../../api/word-def/word-def-api.js');
+/* -------------------------------------------------------------------------- */
+/*                                   IMPORTS                                  */
+/* -------------------------------------------------------------------------- */
+/* ------------------------------- THIRD PARTY ------------------------------ */
+const { EntityRecognizer } = require("botbuilder");
 
+/* --------------------------------- CUSTOM --------------------------------- */
+const wordDefApi = require("./../../api/word-def/word-def-api.js");
+
+/* -------------------------------------------------------------------------- */
+/*                             SERVICE DEFINITION                             */
+/* -------------------------------------------------------------------------- */
 const getDefintion = (session, args) => {
-    const term = EntityRecognizer.findEntity(args.entities, 'term');
+  const term = EntityRecognizer.findEntity(args.entities, "term");
 
-    if (typeof term !== 'undefined') {
-        session.sendTyping();
+  if (!term) {
+    session.send("Sorry! I couldn't find anything about that.");
+    session.beginDialog("/segue");
+    return;
+  }
 
-        wordDefApi(term.entity)
-            .then(
-                (definition) => session.send(definition),
-                (error) => session.send(error)
-            )
-            .then(
-                () => session.beginDialog('/segue')
-            );
-    }
-    else {
-        session.send(`Sorry! I didn't find anything about that.
-				But in the near future I will definitely have an answer,
-                because thanks to you, I'm constantly learning.`);
-        session.beginDialog('/segue');
-    }
+  session.sendTyping();
+  wordDefApi(term.entity)
+    .then(
+      (definition) => session.send(definition),
+      ({ message }) => session.send(message)
+    )
+    .then(() => session.beginDialog("/segue"));
 };
 
 module.exports = getDefintion;
